@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cyber Sentinel - ผู้พิทักษ์โลกไซเบอร์</title>
     
-    <!-- Google Font: Mitr -->
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Mitr:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Mitr:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -19,21 +19,28 @@
                     fontFamily: { sans: ['Mitr', 'sans-serif'] },
                     colors: {
                         cyber: {
-                            dark: '#0f172a',
-                            neon: '#06b6d4',
-                            pink: '#ec4899',
-                            green: '#10b981',
-                            alert: '#ef4444'
+                            dark: '#0a0a0f',
+                            panel: '#151520',
+                            neon: '#00f0ff',
+                            pink: '#ff003c',
+                            green: '#00ff66',
+                            alert: '#ff3333'
                         }
                     },
                     animation: {
-                        'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                         'float': 'float 3s ease-in-out infinite',
+                        'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'glitch': 'glitch 1s linear infinite',
                     },
                     keyframes: {
                         float: {
                             '0%, 100%': { transform: 'translateY(0)' },
-                            '50%': { transform: 'translateY(-20px)' },
+                            '50%': { transform: 'translateY(-15px)' },
+                        },
+                        glitch: {
+                            '2%, 64%': { transform: 'translate(2px,0) skew(0deg)' },
+                            '4%, 60%': { transform: 'translate(-2px,0) skew(0deg)' },
+                            '62%': { transform: 'translate(0,0) skew(5deg)' },
                         }
                     }
                 }
@@ -41,599 +48,574 @@
         }
     </script>
 
-    <!-- MediaPipe Libraries -->
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
-
     <style>
         body {
-            background-color: #050505;
+            background-color: #0a0a0f;
             background-image: 
-                linear-gradient(rgba(6, 182, 212, 0.1) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(6, 182, 212, 0.1) 1px, transparent 1px);
-            background-size: 30px 30px;
-            color: white;
-            overflow: hidden;
-            touch-action: none;
-        }
-
-        /* Custom Hand Cursor */
-        #hand-cursor {
-            position: absolute;
-            width: 30px;
-            height: 30px;
-            border: 3px solid #06b6d4;
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            pointer-events: none; /* Crucial for elementFromPoint to work */
-            z-index: 9999;
-            transition: transform 0.1s;
-            box-shadow: 0 0 15px #06b6d4, inset 0 0 10px #06b6d4;
-        }
-        
-        #hand-cursor.pinching {
-            border-color: #ec4899;
-            box-shadow: 0 0 20px #ec4899, inset 0 0 15px #ec4899;
-            transform: translate(-50%, -50%) scale(0.6);
-            background-color: rgba(236, 72, 153, 0.5);
+                linear-gradient(rgba(0, 240, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 240, 255, 0.05) 1px, transparent 1px);
+            background-size: 40px 40px;
+            color: #ffffff;
+            overflow: hidden; /* Prevent scrolling */
+            touch-action: manipulation;
         }
 
         .glass-panel {
-            background: rgba(15, 23, 42, 0.8);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(6, 182, 212, 0.3);
-            box-shadow: 0 0 20px rgba(6, 182, 212, 0.2);
+            background: rgba(21, 21, 32, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 240, 255, 0.2);
+            box-shadow: 0 0 30px rgba(0, 240, 255, 0.05);
         }
 
-        .cyber-button {
-            transition: all 0.2s;
+        .cyber-btn {
+            transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
         }
-        .cyber-button:hover, .cyber-button.active {
-            transform: scale(1.05);
-            box-shadow: 0 0 15px currentColor;
+        
+        .cyber-btn::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: all 0.4s ease;
+        }
+
+        .cyber-btn:hover::before {
+            left: 100%;
+        }
+
+        .cyber-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .cyber-btn:active {
+            transform: translateY(1px);
+        }
+
+        .glow-neon { box-shadow: 0 0 15px #00f0ff, inset 0 0 10px rgba(0,240,255,0.2); }
+        .glow-pink { box-shadow: 0 0 15px #ff003c, inset 0 0 10px rgba(255,0,60,0.2); }
+        .glow-green { box-shadow: 0 0 15px #00ff66, inset 0 0 10px rgba(0,255,102,0.2); }
+
+        .virus-entity {
+            position: absolute;
+            cursor: crosshair;
+            transition: transform 0.1s;
+        }
+        .virus-entity:active {
+            transform: scale(0.8);
         }
         
-        /* Video feeds */
-        .video-container {
+        /* CRT Scanline effect */
+        .scanlines {
             position: absolute;
-            bottom: 20px;
-            right: 20px;
-            width: 160px;
-            height: 120px;
-            border-radius: 12px;
-            overflow: hidden;
-            border: 2px solid #06b6d4;
-            z-index: 10;
-        }
-        .input_video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transform: scaleX(-1); /* Mirror */
-        }
-        .output_canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 4px, 3px 100%;
             pointer-events: none;
-            transform: scaleX(-1);
-        }
-        
-        /* Hide default cursor in mouse mode */
-        .hide-cursor, .hide-cursor * {
-            cursor: none !important;
+            z-index: 100;
+            opacity: 0.3;
         }
     </style>
 </head>
-<body class="h-screen w-screen flex flex-col items-center justify-center relative">
+<body class="h-screen w-screen flex flex-col items-center justify-center relative select-none">
+    
+    <div class="scanlines"></div>
 
-    <!-- Pointer Cursor -->
-    <div id="hand-cursor" class="hidden"></div>
-
-    <!-- Camera Feed Corner -->
-    <div class="video-container hidden" id="camera-corner">
-        <video class="input_video"></video>
-        <canvas class="output_canvas" width="160" height="120"></canvas>
-    </div>
-
-    <!-- Start Screen -->
-    <div id="start-screen" class="absolute inset-0 z-50 flex items-center justify-center bg-black/90 glass-panel">
-        <div class="text-center p-8 max-w-lg">
-            <h1 class="text-5xl font-bold text-cyber-neon mb-4 tracking-wider" style="text-shadow: 0 0 10px #06b6d4;">CYBER SENTINEL</h1>
-            <p class="text-xl mb-6 text-gray-300">ภารกิจพิทักษ์โลกไซเบอร์ของคุณกำลังจะเริ่มขึ้น</p>
+    <!-- START SCREEN -->
+    <div id="start-screen" class="absolute inset-0 z-50 flex items-center justify-center bg-black/90">
+        <div class="glass-panel p-10 rounded-2xl max-w-lg text-center border-t-4 border-t-cyber-neon w-11/12">
+            <div class="mb-6 animate-float">
+                <span class="text-7xl">🛡️</span>
+            </div>
+            <h1 class="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyber-neon to-cyber-green mb-2 tracking-wider drop-shadow-[0_0_10px_rgba(0,240,255,0.8)]">CYBER SENTINEL</h1>
+            <p class="text-xl text-gray-300 mb-8 font-light">ภารกิจพิทักษ์โลกไซเบอร์</p>
             
-            <div class="bg-gray-800 p-6 rounded-xl border border-cyber-pink mb-8 text-left">
-                <h3 class="text-cyber-pink font-bold text-xl mb-2">🎮 วิธีควบคุม:</h3>
-                <ul class="list-disc pl-5 space-y-2 text-gray-300">
-                    <li><strong class="text-cyber-neon">โหมดกล้อง:</strong> ยกมือขึ้น หน้าจอจะมีเป้าเล็งตามนิ้วชี้ และ <strong class="text-cyber-green">"จีบนิ้ว"</strong> เพื่อจำลองการคลิก</li>
-                    <li><strong class="text-cyber-neon">โหมดเมาส์/สัมผัส:</strong> ใช้เมาส์เลื่อนและคลิก หรือใช้นิ้วแตะหน้าจอได้ตามปกติ</li>
-                </ul>
+            <div class="bg-cyber-dark p-4 rounded-xl border border-gray-700 mb-8 text-left text-sm text-gray-400">
+                <p class="mb-2"><strong class="text-cyber-neon">เป้าหมาย:</strong> ผ่านบททดสอบด้านความปลอดภัยทางไซเบอร์ 5 ด่าน</p>
+                <p><strong class="text-cyber-pink">การควบคุม:</strong> ใช้เมาส์คลิก หรือ ใช้นิ้วสัมผัสหน้าจอเพื่อเลือกคำตอบ</p>
             </div>
 
-            <div class="flex flex-col gap-4">
-                <button id="btn-start-cam" onclick="initCamera()" class="cyber-button bg-cyber-neon text-cyber-dark font-bold text-2xl py-4 px-12 rounded-full w-full shadow-[0_0_15px_#06b6d4]">
-                    ✋ เริ่มภารกิจ (เปิดกล้อง)
-                </button>
-                <button id="btn-start-mouse" onclick="initMouseMode()" class="cyber-button bg-gray-800 text-cyber-neon border-2 border-cyber-neon font-bold text-xl py-3 px-12 rounded-full w-full hover:bg-cyber-neon hover:text-cyber-dark">
-                    🖱️ เริ่มภารกิจ (ใช้เมาส์/สัมผัส)
-                </button>
-            </div>
-            <p id="loading-cam" class="text-cyber-pink mt-4 hidden animate-pulse">กำลังเชื่อมต่อระบบตรวจจับมือ...</p>
-        </div>
-    </div>
-
-    <!-- Main Game Container -->
-    <div id="game-ui" class="w-full max-w-4xl h-full flex flex-col p-6 hidden z-20">
-        <!-- Header -->
-        <div class="flex justify-between items-center glass-panel p-4 rounded-2xl mb-8">
-            <div class="text-2xl font-bold text-cyber-neon">ด่านที่ <span id="ui-level">1</span>/5</div>
-            <div class="text-xl">คะแนน: <span id="ui-score" class="text-cyber-green font-bold text-2xl">0</span></div>
-        </div>
-
-        <!-- Level Canvas -->
-        <div id="level-container" class="flex-grow flex flex-col items-center justify-center relative w-full h-full glass-panel rounded-3xl p-8 overflow-hidden">
-            <!-- Dynamic Content goes here -->
-        </div>
-    </div>
-
-    <!-- Feedback Overlay -->
-    <div id="feedback-overlay" class="absolute inset-0 z-40 flex items-center justify-center bg-black/80 hidden transition-opacity duration-300 opacity-0">
-        <div id="feedback-box" class="text-center p-8 rounded-3xl transform scale-50 transition-transform duration-300">
-            <div id="feedback-icon" class="text-7xl mb-4">✅</div>
-            <h2 id="feedback-title" class="text-4xl font-bold mb-2">ยอดเยี่ยม!</h2>
-            <p id="feedback-desc" class="text-xl text-gray-200">คำอธิบาย</p>
-        </div>
-    </div>
-
-    <!-- End Screen -->
-    <div id="end-screen" class="absolute inset-0 z-50 flex items-center justify-center bg-black/95 hidden glass-panel">
-        <div class="text-center p-10 max-w-2xl bg-gray-900 border-2 border-cyber-green rounded-3xl shadow-[0_0_30px_#10b981]">
-            <h1 class="text-5xl font-bold text-cyber-green mb-4">🏆 ภารกิจสำเร็จ!</h1>
-            <p class="text-2xl mb-2">คุณคือสุดยอดผู้พิทักษ์ไซเบอร์</p>
-            <div class="text-4xl font-bold text-cyber-neon my-6">คะแนนรวม: <span id="final-score"></span> / 500</div>
-            
-            <div id="evaluation-text" class="text-xl text-gray-300 mb-8 p-4 bg-gray-800 rounded-xl">
-                <!-- Evaluation text injected here -->
-            </div>
-
-            <button onclick="location.reload()" class="cyber-button bg-cyber-pink text-white font-bold text-xl py-3 px-8 rounded-full shadow-[0_0_15px_#ec4899]">
-                เล่นอีกครั้ง
+            <button onclick="startGame()" class="cyber-btn w-full bg-cyber-neon/10 text-cyber-neon border-2 border-cyber-neon font-bold text-2xl py-4 rounded-xl glow-neon hover:bg-cyber-neon hover:text-black transition-colors">
+                เริ่มเชื่อมต่อระบบ (START)
             </button>
         </div>
     </div>
 
+    <!-- GAME UI -->
+    <div id="game-ui" class="w-full max-w-5xl h-full flex flex-col p-4 sm:p-8 hidden z-20">
+        <!-- Header -->
+        <div class="flex justify-between items-center glass-panel p-4 sm:px-8 rounded-2xl mb-6">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-full border-2 border-cyber-neon flex items-center justify-center text-cyber-neon font-bold text-xl glow-neon">
+                    <span id="ui-level">1</span>
+                </div>
+                <div>
+                    <div class="text-xs text-cyber-neon uppercase tracking-widest">Security Level</div>
+                    <div class="font-bold text-lg hidden sm:block">ด่านปัจจุบัน</div>
+                </div>
+            </div>
+            <div class="text-right">
+                <div class="text-xs text-cyber-green uppercase tracking-widest">System Score</div>
+                <div class="font-bold text-3xl text-cyber-green drop-shadow-[0_0_8px_rgba(0,255,102,0.8)]"><span id="ui-score">0</span></div>
+            </div>
+        </div>
+
+        <!-- Level Container -->
+        <div id="level-container" class="flex-grow glass-panel rounded-3xl relative overflow-hidden flex flex-col items-center justify-center p-6 border-b-4 border-b-cyber-neon">
+            <!-- Content Injected via JS -->
+        </div>
+    </div>
+
+    <!-- FEEDBACK OVERLAY -->
+    <div id="feedback-overlay" class="absolute inset-0 z-40 flex items-center justify-center bg-black/85 hidden opacity-0 transition-opacity duration-300">
+        <div id="feedback-box" class="text-center p-8 rounded-2xl transform scale-75 transition-transform duration-300 w-11/12 max-w-md">
+            <div id="feedback-icon" class="text-8xl mb-6"></div>
+            <h2 id="feedback-title" class="text-4xl font-bold mb-4"></h2>
+            <p id="feedback-desc" class="text-lg text-gray-200 bg-black/50 p-4 rounded-lg border border-gray-600"></p>
+            
+            <!-- เพิ่มปุ่มเล่นใหม่สำหรับกรณีที่ไม่ผ่าน -->
+            <div id="retry-container" class="mt-6 hidden">
+                <button onclick="retryLevel()" class="cyber-btn bg-cyber-pink/20 text-cyber-pink border-2 border-cyber-pink font-bold text-lg py-2 px-6 rounded-xl glow-pink hover:bg-cyber-pink hover:text-white transition-colors">
+                    🔄 เล่นใหม่ (Try Again)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- END SCREEN -->
+    <div id="end-screen" class="absolute inset-0 z-50 flex items-center justify-center bg-black/95 hidden">
+        <div class="glass-panel p-10 rounded-3xl max-w-2xl text-center w-11/12 border-2 border-cyber-green glow-green">
+            <div class="text-8xl mb-6 animate-bounce">🏆</div>
+            <h1 class="text-5xl font-bold text-cyber-green mb-2">ภารกิจเสร็จสิ้น!</h1>
+            <p class="text-xl text-gray-300 mb-8">คุณได้ทำการปกป้องระบบไว้ได้</p>
+            
+            <div class="bg-black/60 rounded-2xl p-6 mb-8 border border-cyber-green/30">
+                <div class="text-gray-400 text-sm uppercase tracking-widest mb-2">คะแนนประเมินผล (Final Score)</div>
+                <div class="text-6xl font-bold text-cyber-neon mb-4"><span id="final-score">0</span><span class="text-3xl text-gray-500">/500</span></div>
+                <div id="evaluation-text" class="text-lg font-medium text-pink-400">
+                    <!-- Text injected -->
+                </div>
+            </div>
+
+            <button onclick="location.reload()" class="cyber-btn w-full bg-cyber-pink/20 text-cyber-pink border-2 border-cyber-pink font-bold text-xl py-4 rounded-xl glow-pink hover:bg-cyber-pink hover:text-white transition-colors">
+                รีบูตระบบ (PLAY AGAIN)
+            </button>
+        </div>
+    </div>
+
+    <!-- GAME LOGIC SCRIPT -->
     <script>
-        // --- Game State ---
+        // Game State
         let currentLevel = 1;
         let score = 0;
         let isGameActive = false;
-        let isPinching = false;
-        let pinchCooldown = false;
-        let controlMode = null; // 'cam' or 'mouse'
         
-        // --- Elements ---
-        const cursor = document.getElementById('hand-cursor');
-        const levelContainer = document.getElementById('level-container');
-        const uiLevel = document.getElementById('ui-level');
-        const uiScore = document.getElementById('ui-score');
+        // Minigame variables
+        let virusInterval;
+        let virusKilled = 0;
+        let virusSpawned = 0;
+        const VIRUS_TARGET = 8;
+        let gameLoopActive = false;
 
-        // --- Mouse & Touch Controls ---
-        function updateCursorPosition(x, y) {
-            if (controlMode === 'mouse' && isGameActive) {
-                cursor.style.left = x + 'px';
-                cursor.style.top = y + 'px';
+        // Audio Context (Muted beep sounds using Web Audio API for cyberpunk feel)
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSound(type) {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            if (type === 'click') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+            } else if (type === 'correct') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(600, audioCtx.currentTime + 0.1);
+                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+            } else if (type === 'wrong') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+                osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.3);
+                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+            } else if (type === 'shoot') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(900, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1);
+                gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
             }
         }
 
-        document.addEventListener('mousemove', (e) => updateCursorPosition(e.clientX, e.clientY));
-        document.addEventListener('touchmove', (e) => {
-            if (e.touches.length > 0) updateCursorPosition(e.touches[0].clientX, e.touches[0].clientY);
-        });
-
-        function handleInteractionStart() {
-            if (controlMode === 'mouse' && isGameActive) cursor.classList.add('pinching');
-        }
-        function handleInteractionEnd() {
-            if (controlMode === 'mouse' && isGameActive) cursor.classList.remove('pinching');
-        }
-
-        document.addEventListener('mousedown', handleInteractionStart);
-        document.addEventListener('touchstart', handleInteractionStart);
-        document.addEventListener('mouseup', handleInteractionEnd);
-        document.addEventListener('touchend', handleInteractionEnd);
-        
-        // --- Level Data & Logic ---
+        // Level Definitions
         const levels = [
             {
                 id: 1,
-                title: "รหัสผ่านนิรภัย (Password Safe)",
-                desc: "จีบนิ้วเลือกตู้เซฟที่มีรหัสผ่านแข็งแกร่งที่สุด",
                 render: () => `
-                    <div class="text-center mb-10 w-full z-10 pointer-events-none">
-                        <h2 class="text-3xl font-bold text-cyber-neon">ภารกิจที่ 1: รหัสผ่านนิรภัย</h2>
-                        <p class="text-lg text-gray-400">เลือกรหัสผ่านที่คาดเดายากที่สุด</p>
-                    </div>
-                    <div class="flex flex-wrap justify-center gap-8 w-full z-10">
-                        <button onclick="handleAnswer(false, 'รหัสผ่านสั้นไปและเดาง่ายเกินไปนะ!')" class="cyber-button bg-gray-800 border-2 border-gray-600 rounded-2xl p-6 w-64 text-center hover:border-cyber-alert hover:text-cyber-alert">
-                            <div class="text-6xl mb-4">🔓</div>
-                            <div class="text-2xl font-mono bg-black p-2 rounded">12345678</div>
-                        </button>
-                        <button onclick="handleAnswer(true, 'ถูกต้อง! รหัสผ่านที่ดีต้องยาว มีตัวพิมพ์เล็ก ใหญ่ ตัวเลข และสัญลักษณ์')" class="cyber-button bg-gray-800 border-2 border-gray-600 rounded-2xl p-6 w-64 text-center hover:border-cyber-green hover:text-cyber-green">
-                            <div class="text-6xl mb-4">🔐</div>
-                            <div class="text-2xl font-mono bg-black p-2 rounded">Cyb3r!99#z</div>
-                        </button>
-                        <button onclick="handleAnswer(false, 'ยังไม่ปลอดภัยพอ ไม่มีสัญลักษณ์พิเศษและสั้นไป')" class="cyber-button bg-gray-800 border-2 border-gray-600 rounded-2xl p-6 w-64 text-center hover:border-cyber-alert hover:text-cyber-alert">
-                            <div class="text-6xl mb-4">🔓</div>
-                            <div class="text-2xl font-mono bg-black p-2 rounded">password</div>
-                        </button>
+                    <div class="text-center w-full max-w-2xl">
+                        <div class="text-cyber-neon text-6xl mb-4">🔐</div>
+                        <h2 class="text-3xl font-bold mb-2">ด่านที่ 1: รหัสผ่านนิรภัย</h2>
+                        <p class="text-gray-400 mb-8">แฮกเกอร์กำลังพยายามสุ่มรหัสผ่านเข้าเซิร์ฟเวอร์! <br>เลือกรหัสผ่านที่ <span class="text-cyber-green font-bold">แข็งแกร่งและปลอดภัยที่สุด</span> เพื่อล็อคระบบ</p>
+                        
+                        <div class="flex flex-col gap-4">
+                            <button onclick="handleAnswer(false, 'รหัสผ่านมีแค่ตัวเลข เดาง่ายเกินไป แฮกเกอร์ใช้เวลาไม่ถึง 1 วินาทีก็แฮกได้!')" class="cyber-btn bg-cyber-panel border border-gray-600 hover:border-cyber-alert rounded-xl p-4 text-xl font-mono text-gray-300 text-left flex justify-between items-center group">
+                                <span>123456789</span>
+                                <span class="text-gray-600 group-hover:text-cyber-alert">⚠️ อ่อนแอ</span>
+                            </button>
+                            <button onclick="handleAnswer(false, 'คำศัพท์ที่มีในพจนานุกรม และไม่มีสัญลักษณ์พิเศษ สามารถถูกเดาได้ง่ายด้วยเทคนิค Dictionary Attack')" class="cyber-btn bg-cyber-panel border border-gray-600 hover:border-cyber-alert rounded-xl p-4 text-xl font-mono text-gray-300 text-left flex justify-between items-center group">
+                                <span>adminpassword</span>
+                                <span class="text-gray-600 group-hover:text-cyber-alert">⚠️ ปานกลาง</span>
+                            </button>
+                            <button onclick="handleAnswer(true, 'ถูกต้อง! รหัสผ่านที่ดีควรมีความยาว ผสมตัวพิมพ์ใหญ่ พิมพ์เล็ก ตัวเลข และสัญลักษณ์พิเศษ')" class="cyber-btn bg-cyber-panel border border-gray-600 hover:border-cyber-green rounded-xl p-4 text-xl font-mono text-cyber-neon text-left flex justify-between items-center group">
+                                <span>P@ssW0rd_!99Xz</span>
+                                <span class="text-gray-600 group-hover:text-cyber-green">✅ แข็งแกร่ง</span>
+                            </button>
+                        </div>
                     </div>
                 `
             },
             {
                 id: 2,
-                title: "กับดักฟิชชิ่ง (Phishing Trap)",
-                desc: "พิจารณาอีเมลนี้ แล้วจีบนิ้วเลือกปัดซ้าย(ลบ) หรือ ขวา(เชื่อ)",
                 render: () => `
-                    <div class="text-center mb-6 w-full z-10 pointer-events-none">
-                        <h2 class="text-3xl font-bold text-cyber-pink">ภารกิจที่ 2: กับดักฟิชชิ่ง</h2>
-                        <p class="text-lg text-gray-400">อีเมลฉบับนี้ปลอดภัยหรือไม่?</p>
-                    </div>
-                    <div class="bg-gray-100 text-black p-6 rounded-xl w-full max-w-md shadow-2xl relative z-10">
-                        <div class="border-b pb-2 mb-4">
-                            <p class="text-sm text-gray-500">From: admin@apple-support-th.net</p>
-                            <p class="font-bold text-lg">ด่วน! บัญชีของคุณถูกระงับ 🚨</p>
+                    <div class="text-center w-full max-w-2xl h-full flex flex-col justify-center">
+                        <h2 class="text-3xl font-bold text-cyber-pink mb-2">ด่านที่ 2: กับดักฟิชชิ่ง (Phishing)</h2>
+                        <p class="text-gray-400 mb-6">คุณได้รับอีเมลแจ้งเตือนด่วน คุณจะทำอย่างไร?</p>
+                        
+                        <div class="bg-gray-100 text-black p-6 rounded-t-xl text-left border-t-8 border-red-500 shadow-2xl relative">
+                            <div class="flex justify-between items-start border-b border-gray-300 pb-3 mb-4">
+                                <div>
+                                    <p class="text-xs text-gray-500">จาก: <span class="font-bold text-red-600">security@paypaI-update.com</span></p>
+                                    <p class="text-xs text-gray-500">ถึง: user@company.com</p>
+                                    <h3 class="font-bold text-xl mt-1">🚨 บัญชีของคุณถูกระงับชั่วคราว!</h3>
+                                </div>
+                                <div class="text-2xl">📧</div>
+                            </div>
+                            <p class="text-sm mb-4">เรียนผู้ใช้งาน,<br><br>เราตรวจพบความพยายามเข้าสู่ระบบที่ผิดปกติ กรุณายืนยันตัวตนของคุณภายใน <strong>24 ชั่วโมง</strong> มิฉะนั้นบัญชีของคุณจะถูกลบถาวร!</p>
+                            <div class="bg-blue-600 text-white text-center py-2 rounded font-bold mb-2 opacity-80 pointer-events-none">คลิกที่นี่เพื่อยืนยันตัวตนทันที</div>
                         </div>
-                        <p class="mb-4">กรุณายืนยันตัวตนด่วนภายใน 24 ชม. เพื่อปลดล็อคบัญชี iCloud ของคุณ มิฉะนั้นข้อมูลจะถูกลบถาวร!</p>
-                        <div class="text-center bg-blue-600 text-white py-2 rounded-lg pointer-events-none">คลิกที่นี่เพื่อยืนยันตัวตน</div>
-                    </div>
-                    <div class="flex justify-center gap-12 mt-10 w-full z-10">
-                        <button onclick="handleAnswer(true, 'เยี่ยมมาก! อีเมลขู่ให้รีบร้อนและ URL แปลกๆ คือจุดสังเกตของ Phishing')" class="cyber-button bg-cyber-alert/20 border-2 border-cyber-alert text-cyber-alert rounded-full py-4 px-8 text-xl font-bold flex items-center gap-2">
-                            <span class="text-3xl">🗑️</span> บล็อก & ลบทิ้ง
-                        </button>
-                        <button onclick="handleAnswer(false, 'โดนหลอกแล้ว! โดเมนอีเมลไม่ใช่ของจริง และมักใช้ความกลัวมากดดันเรา')" class="cyber-button bg-cyber-green/20 border-2 border-cyber-green text-cyber-green rounded-full py-4 px-8 text-xl font-bold flex items-center gap-2">
-                            <span class="text-3xl">🖱️</span> คลิกลิงก์
-                        </button>
+                        
+                        <div class="flex gap-4 w-full bg-cyber-panel p-4 rounded-b-xl border-x border-b border-gray-700">
+                            <button onclick="handleAnswer(false, 'โดนหลอกแล้ว! หากดูที่อีเมลผู้ส่ง (paypaI-update) เป็นตัว ไอ(I) ไม่ใช่ แอล(l) และมักจะใช้ข้อความสร้างความตื่นตระหนก')" class="cyber-btn flex-1 bg-gray-800 text-white py-3 rounded-lg hover:bg-cyber-alert/20 border border-transparent hover:border-cyber-alert transition-all">
+                                🖱️ คลิกลิงก์ยืนยัน
+                            </button>
+                            <button onclick="handleAnswer(true, 'ยอดเยี่ยม! คุณสังเกตเห็นโดเมนที่ผิดปกติ และไม่หลงกลข้อความที่กดดันให้รีบเร่ง (Urgency)')" class="cyber-btn flex-1 bg-gray-800 text-white py-3 rounded-lg hover:bg-cyber-green/20 border border-transparent hover:border-cyber-green transition-all">
+                                🗑️ ลบทิ้ง / รายงานสแปม
+                            </button>
+                        </div>
                     </div>
                 `
             },
             {
                 id: 3,
-                title: "จับผิด URL (Spot the Fake)",
-                desc: "จีบนิ้วเลือกเว็บไซต์ที่เป็น 'ของปลอม'",
                 render: () => `
-                    <div class="text-center mb-10 w-full z-10 pointer-events-none">
-                        <h2 class="text-3xl font-bold text-yellow-400">ภารกิจที่ 3: จับผิดเว็บปลอม</h2>
-                        <p class="text-lg text-gray-400">จีบนิ้วเลือก Link ที่เป็นเว็บไซต์หลอกลวง!</p>
-                    </div>
-                    <div class="flex flex-col items-center gap-6 w-full z-10">
-                        <button onclick="handleAnswer(false, 'นี่คือเว็บจริง! สะกดถูกต้องและมี https')" class="cyber-button w-full max-w-xl bg-gray-800 border-2 border-gray-600 rounded-xl p-4 text-left hover:border-cyber-green">
-                            <p class="text-gray-400 text-sm mb-1">หน้า Login ธนาคาร (1)</p>
-                            <p class="text-2xl font-mono text-white break-all">https://www.<span class="text-cyber-green">kasikornbank</span>.com/login</p>
-                        </button>
-                        <button onclick="handleAnswer(true, 'ตาแหลมมาก! มิจฉาชีพมักเปลี่ยนตัวอักษรเนียนๆ เช่น i เป็น l หรือ o เป็น 0')" class="cyber-button w-full max-w-xl bg-gray-800 border-2 border-gray-600 rounded-xl p-4 text-left hover:border-cyber-alert">
-                            <p class="text-gray-400 text-sm mb-1">หน้า Login ธนาคาร (2)</p>
-                            <p class="text-2xl font-mono text-white break-all">https://www.<span class="text-cyber-alert">kaslkornbank</span>.com/login</p>
-                        </button>
+                    <div class="text-center w-full max-w-2xl">
+                        <div class="text-yellow-400 text-6xl mb-4">🔍</div>
+                        <h2 class="text-3xl font-bold mb-2 text-yellow-400">ด่านที่ 3: จับผิด URL ปลอม</h2>
+                        <p class="text-gray-400 mb-8">มิจฉาชีพสร้างเว็บธนาคารปลอมเพื่อขโมยรหัสผ่าน <br>จงคลิกเลือก URL ที่เป็น <span class="text-cyber-alert font-bold underline">เว็บไซต์ปลอม (Fake URL)</span></p>
+                        
+                        <div class="grid grid-cols-1 gap-6">
+                            <button onclick="handleAnswer(false, 'ผิดครับ! นี่คือเว็บไซต์ของจริง สังเกตที่โดเมนเนมที่สะกดถูกต้อง')" class="cyber-btn bg-black border-2 border-gray-600 hover:border-yellow-400 rounded-xl p-4 text-left group">
+                                <p class="text-xs text-gray-500 mb-1">เว็บไซต์ที่ 1</p>
+                                <div class="bg-gray-900 rounded p-3 flex items-center gap-2 overflow-x-auto">
+                                    <span class="text-gray-400">🔒</span>
+                                    <span class="font-mono text-lg text-white">https://www.<span class="text-cyber-neon group-hover:text-yellow-400 transition-colors">kasikornbank</span>.com/login</span>
+                                </div>
+                            </button>
+                            
+                            <button onclick="handleAnswer(true, 'ตาแหลมมาก! มิจฉาชีพเปลี่ยนตัว i เป็น l (แอล) เป็นเทคนิคที่เรียกว่า Typosquatting เพื่อหลอกตาผู้ใช้')" class="cyber-btn bg-black border-2 border-gray-600 hover:border-cyber-green rounded-xl p-4 text-left group">
+                                <p class="text-xs text-gray-500 mb-1">เว็บไซต์ที่ 2</p>
+                                <div class="bg-gray-900 rounded p-3 flex items-center gap-2 overflow-x-auto">
+                                    <span class="text-gray-400">🔒</span>
+                                    <span class="font-mono text-lg text-white">https://www.<span class="text-cyber-alert group-hover:text-cyber-green transition-colors">kaslkornbank</span>.com/login</span>
+                                </div>
+                            </button>
+                        </div>
                     </div>
                 `
             },
             {
                 id: 4,
-                title: "สกัดจับมัลแวร์ (Malware Defender)",
-                desc: "จีบนิ้วรัวๆ เพื่อทำลายไวรัสที่กำลังตกลงมา",
                 render: () => {
-                    // Logic พิเศษสำหรับด่าน 4: มินิเกมยิงไวรัส
-                    setTimeout(startMalwareMiniGame, 500);
+                    setTimeout(startMinigame, 500); // Start after render
                     return `
-                    <div class="text-center w-full z-10 pointer-events-none absolute top-8">
-                        <h2 class="text-3xl font-bold text-cyber-neon">ภารกิจที่ 4: สกัดจับมัลแวร์</h2>
-                        <p class="text-lg text-gray-400">จีบนิ้วที่ตัวไวรัสเพื่อกำจัดมัน ก่อนมันเจาะระบบ!</p>
-                    </div>
-                    <div id="malware-zone" class="w-full h-full relative z-0">
-                        <!-- ไวรัสจะถูกสร้างที่นี่ -->
-                    </div>
-                    <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-6xl pointer-events-none z-10 animate-pulse">
-                        💻 (เซิร์ฟเวอร์ของคุณ)
+                    <div class="text-center w-full h-full relative pointer-events-none">
+                        <div class="absolute top-0 left-0 w-full z-10">
+                            <h2 class="text-3xl font-bold text-cyber-neon drop-shadow-md">ด่านที่ 4: สกัดจับมัลแวร์</h2>
+                            <p class="text-gray-300">คลิกที่ตัวไวรัสเพื่อทำลายมันก่อนที่มันจะเจาะลงเซิร์ฟเวอร์!</p>
+                            <p class="text-cyber-pink font-bold mt-2">กำจัดไวรัส: <span id="virus-counter">0</span>/${VIRUS_TARGET}</p>
+                        </div>
+                        
+                        <!-- Game Area -->
+                        <div id="game-area" class="absolute inset-0 pointer-events-auto mt-24 border-t-2 border-dashed border-cyber-alert/30"></div>
+                        
+                        <!-- Server Base -->
+                        <div class="absolute bottom-0 left-0 w-full h-16 bg-cyber-neon/10 border-t-4 border-cyber-neon flex items-center justify-center z-10">
+                            <span class="text-cyber-neon font-bold tracking-widest uppercase">>>> Server Database <<<</span>
+                        </div>
                     </div>
                     `;
                 }
             },
             {
                 id: 5,
-                title: "เกราะป้องกันข้อมูล (Data Shield)",
-                desc: "จีบนิ้วที่ปุ่มเพื่อเปิดโล่ป้องกัน Ransomware",
                 render: () => `
-                    <div class="text-center mb-6 w-full z-10 pointer-events-none absolute top-8">
-                        <h2 class="text-3xl font-bold text-cyber-neon">ภารกิจที่ 5: เกราะป้องกันข้อมูล</h2>
-                        <p class="text-lg text-gray-400">Ransomware (ไวรัสเรียกค่าไถ่) กำลังมา!</p>
-                    </div>
-                    
-                    <div class="flex flex-col items-center justify-center h-full w-full mt-10 z-10">
-                        <div class="text-8xl mb-8 animate-float">🔒👻</div>
-                        <p class="text-cyber-alert font-bold mb-8 text-xl text-center">"ส่งเงินมา ไม่ระเบิดไฟล์ทิ้ง!"</p>
+                    <div class="text-center w-full h-full flex flex-col justify-center items-center relative">
+                        <div class="absolute inset-0 bg-red-900/20 animate-pulse pointer-events-none rounded-3xl"></div>
                         
-                        <button onclick="handleAnswer(true, 'รอดไปได้! การแบ็คอัพข้อมูลและอัปเดตระบบสม่ำเสมอคือโล่ป้องกันที่ดีที่สุด')" class="cyber-button bg-blue-900/50 border-4 border-blue-500 rounded-full w-48 h-48 flex flex-col items-center justify-center shadow-[0_0_30px_#3b82f6] hover:bg-blue-600 hover:scale-110 transition-all">
-                            <span class="text-6xl mb-2">🛡️</span>
-                            <span class="font-bold">จีบนิ้วเปิดโล่!</span>
+                        <div class="text-9xl mb-6 animate-glitch drop-shadow-[0_0_20px_#ff003c]">💀</div>
+                        <h2 class="text-4xl font-bold text-cyber-alert mb-2">RANSOMWARE ATTACK!</h2>
+                        <p class="text-xl text-gray-300 mb-8 max-w-md">"ไฟล์ทั้งหมดของคุณถูกเข้ารหัส ส่ง Bitcoin มาเดี๋ยวนี้!"</p>
+                        
+                        <p class="text-sm text-gray-400 mb-6">วิธีที่ดีที่สุดในการรับมือ Ransomware คือการมีระบบสำรองข้อมูล (Backup)</p>
+
+                        <button onclick="handleAnswer(true, 'รอดพ้นวิกฤต! การมีระบบ Backup สม่ำเสมอและอัปเดตระบบป้องกันคือเกราะที่ดีที่สุดจาก Ransomware')" class="cyber-btn bg-blue-900/40 border-4 border-blue-500 rounded-full w-56 h-56 flex flex-col items-center justify-center shadow-[0_0_40px_rgba(59,130,246,0.6)] hover:bg-blue-600/50 hover:scale-110 transition-all z-10">
+                            <span class="text-7xl mb-2">🛡️</span>
+                            <span class="font-bold text-xl text-white">เปิดระบบ Backup</span>
                         </button>
                     </div>
                 `
             }
         ];
 
-        // --- Core Functions ---
+        // Functions
+        function startGame() {
+            playSound('click');
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('game-ui').classList.remove('hidden');
+            isGameActive = true;
+            score = 0;
+            updateScore(0);
+            loadLevel(1);
+        }
+
         function loadLevel(levelNum) {
             currentLevel = levelNum;
-            const levelData = levels[levelNum - 1];
-            uiLevel.innerText = currentLevel;
-            levelContainer.innerHTML = levelData.render();
-            // Reset cursor styling
-            cursor.className = 'hidden';
-            setTimeout(() => { if(isGameActive) cursor.classList.remove('hidden'); }, 100);
+            document.getElementById('ui-level').innerText = levelNum;
+            const container = document.getElementById('level-container');
+            
+            // Clear previous game loops if any
+            gameLoopActive = false;
+            clearInterval(virusInterval);
+            
+            // Fade in effect
+            container.style.opacity = 0;
+            container.innerHTML = levels[levelNum - 1].render();
+            
+            setTimeout(() => {
+                container.style.transition = 'opacity 0.5s';
+                container.style.opacity = 1;
+            }, 50);
         }
 
         function updateScore(points) {
             score += points;
-            uiScore.innerText = score;
-            // Pop effect
-            uiScore.classList.add('scale-150', 'text-white');
-            setTimeout(() => uiScore.classList.remove('scale-150', 'text-white'), 300);
+            const scoreEl = document.getElementById('ui-score');
+            scoreEl.innerText = score;
+            
+            if(points > 0) {
+                scoreEl.classList.add('scale-150', 'text-white');
+                setTimeout(() => scoreEl.classList.remove('scale-150', 'text-white'), 300);
+            }
         }
 
-        function handleAnswer(isCorrect, feedbackText) {
-            // Prevent multiple clicks
-            document.querySelectorAll('button').forEach(btn => btn.style.pointerEvents = 'none');
+        function handleAnswer(isCorrect, feedbackMsg) {
+            if(!isGameActive) return;
+            playSound('click');
             
+            // Disable buttons to prevent spam
+            document.querySelectorAll('button').forEach(btn => btn.style.pointerEvents = 'none');
+
             const overlay = document.getElementById('feedback-overlay');
             const box = document.getElementById('feedback-box');
             const icon = document.getElementById('feedback-icon');
             const title = document.getElementById('feedback-title');
             const desc = document.getElementById('feedback-desc');
+            const retryContainer = document.getElementById('retry-container');
 
             overlay.classList.remove('hidden');
-            
+
             if (isCorrect) {
+                playSound('correct');
                 updateScore(100);
-                box.className = 'bg-gray-900 border-4 border-cyber-green text-center p-8 rounded-3xl transform transition-transform duration-300 scale-100 shadow-[0_0_40px_#10b981]';
+                box.className = 'glass-panel text-center p-8 rounded-2xl transform transition-transform duration-300 scale-100 border-2 border-cyber-green glow-green w-11/12 max-w-md';
                 icon.innerText = '✅';
                 title.innerText = 'ระบบปลอดภัย!';
-                title.className = 'text-4xl font-bold mb-2 text-cyber-green';
+                title.className = 'text-4xl font-bold mb-4 text-cyber-green';
+                retryContainer.classList.add('hidden'); // ซ่อนปุ่มเล่นใหม่ถ้าตอบถูก
             } else {
-                box.className = 'bg-gray-900 border-4 border-cyber-alert text-center p-8 rounded-3xl transform transition-transform duration-300 scale-100 shadow-[0_0_40px_#ef4444]';
+                playSound('wrong');
+                box.className = 'glass-panel text-center p-8 rounded-2xl transform transition-transform duration-300 scale-100 border-2 border-cyber-alert glow-pink w-11/12 max-w-md bg-red-950/40';
                 icon.innerText = '❌';
                 title.innerText = 'ระบบถูกเจาะ!';
-                title.className = 'text-4xl font-bold mb-2 text-cyber-alert';
+                title.className = 'text-4xl font-bold mb-4 text-cyber-alert animate-glitch';
+                retryContainer.classList.remove('hidden'); // แสดงปุ่มเล่นใหม่เมื่อตอบผิด
             }
             
-            desc.innerText = feedbackText;
+            desc.innerText = feedbackMsg;
 
-            // Animate In
+            // Fade in
             setTimeout(() => overlay.classList.add('opacity-100'), 10);
 
-            // Move to next level
-            setTimeout(() => {
-                overlay.classList.remove('opacity-100');
+            if (isCorrect) {
+                // ข้ามไปด่านต่อไปอัตโนมัติเฉพาะเมื่อตอบถูกเท่านั้น
                 setTimeout(() => {
-                    overlay.classList.add('hidden');
-                    if (currentLevel < levels.length) {
-                        loadLevel(currentLevel + 1);
-                    } else {
-                        showEndScreen();
-                    }
-                }, 300);
-            }, 3500);
+                    overlay.classList.remove('opacity-100');
+                    setTimeout(() => {
+                        overlay.classList.add('hidden');
+                        if (currentLevel < levels.length) {
+                            loadLevel(currentLevel + 1);
+                        } else {
+                            showEndScreen();
+                        }
+                    }, 300); // wait for fade out
+                }, 3500); // show feedback for 3.5s
+            }
         }
 
-        // --- Mini Game Logic (Level 4) ---
-        let malwareInterval;
-        let malwareCount = 0;
-        let malwareKilled = 0;
-        const totalMalware = 5;
+        function retryLevel() {
+            playSound('click');
+            const overlay = document.getElementById('feedback-overlay');
+            
+            // เฟดหน้าต่างแจ้งเตือนออก
+            overlay.classList.remove('opacity-100');
+            setTimeout(() => {
+                overlay.classList.add('hidden');
+                
+                // เปิดใช้งานปุ่มทั้งหมดอีกครั้ง
+                document.querySelectorAll('button').forEach(btn => btn.style.pointerEvents = 'auto');
+                
+                // โหลดด่านปัจจุบันขึ้นมาให้เล่นใหม่
+                loadLevel(currentLevel);
+            }, 300);
+        }
 
-        function startMalwareMiniGame() {
-            malwareCount = 0;
-            malwareKilled = 0;
-            const zone = document.getElementById('malware-zone');
-            if(!zone) return;
+        // Minigame Logic (Level 4)
+        function startMinigame() {
+            gameLoopActive = true;
+            virusKilled = 0;
+            virusSpawned = 0;
+            const area = document.getElementById('game-area');
+            const counter = document.getElementById('virus-counter');
+            if(!area) return;
 
-            malwareInterval = setInterval(() => {
-                if (malwareCount >= totalMalware) {
-                    clearInterval(malwareInterval);
+            // Spawn loop
+            virusInterval = setInterval(() => {
+                if(!gameLoopActive) {
+                    clearInterval(virusInterval);
+                    return;
+                }
+                
+                if (virusSpawned >= VIRUS_TARGET * 1.5) {
+                    // if spawned too many and player missed too many
+                    if (virusKilled < VIRUS_TARGET) {
+                        gameLoopActive = false;
+                        handleAnswer(false, 'คุณทำลายไวรัสไม่ทัน! ระบบถูกมัลแวร์โจมตี ควรติดตั้งและอัปเดต Antivirus สม่ำเสมอ');
+                    }
+                    clearInterval(virusInterval);
                     return;
                 }
 
-                const bug = document.createElement('button');
-                bug.innerText = '👾';
-                bug.className = 'absolute text-5xl cyber-button filter drop-shadow-[0_0_10px_#ef4444]';
-                bug.style.left = Math.random() * 80 + 10 + '%';
-                bug.style.top = '-50px';
+                createVirus(area, counter);
+                virusSpawned++;
                 
-                // Animation falling
-                let topPos = -50;
-                const fallSpeed = 2 + Math.random() * 2;
-                
-                const fallAnim = setInterval(() => {
-                    topPos += fallSpeed;
-                    bug.style.top = topPos + 'px';
-                    
-                    // If reaches bottom (Server)
-                    if (topPos > zone.offsetHeight - 50) {
-                        clearInterval(fallAnim);
-                        bug.remove();
-                        if(malwareCount >= totalMalware && malwareKilled < totalMalware) {
-                            handleAnswer(false, 'ช้าไป! ไวรัสเจาะเข้าระบบได้สำเร็จ ควรติดตั้งโปรแกรม Anti-Virus ที่ไว้ใจได้นะ');
-                        }
-                    }
-                }, 30);
-
-                // Click to kill
-                bug.onclick = function() {
-                    clearInterval(fallAnim);
-                    this.innerText = '💥';
-                    this.classList.add('text-cyber-green', 'scale-150');
-                    malwareKilled++;
-                    setTimeout(() => this.remove(), 200);
-                    
-                    if (malwareKilled >= totalMalware) {
-                        setTimeout(() => handleAnswer(true, 'ไวดั่งสายฟ้า! คุณปกป้องเซิร์ฟเวอร์จากมัลแวร์ได้สำเร็จ'), 500);
-                    }
-                };
-
-                zone.appendChild(bug);
-                malwareCount++;
-            }, 800);
+            }, 800); // spawn every 0.8s
         }
 
-        // --- End Screen Logic ---
+        function createVirus(area, counter) {
+            const v = document.createElement('div');
+            const types = ['👾', '🦠', '🐞'];
+            v.innerText = types[Math.floor(Math.random() * types.length)];
+            v.className = 'virus-entity text-4xl filter drop-shadow-[0_0_8px_#ff003c]';
+            
+            // Random start position X (10% to 90%)
+            v.style.left = (Math.random() * 80 + 10) + '%';
+            v.style.top = '-50px';
+            
+            area.appendChild(v);
+            
+            let pos = -50;
+            let speed = 2 + Math.random() * 2; // speed 2 to 4
+            
+            // Fall animation loop
+            const fall = setInterval(() => {
+                if(!gameLoopActive) {
+                    clearInterval(fall);
+                    v.remove();
+                    return;
+                }
+                
+                pos += speed;
+                v.style.top = pos + 'px';
+                
+                // If hits bottom
+                if (pos > area.offsetHeight - 40) {
+                    clearInterval(fall);
+                    v.remove();
+                    // Optional: deduct points or visual penalty, but to keep it simple, we just let it pass.
+                    // The fail condition is handled by the spawn interval checking spawned vs killed.
+                }
+            }, 20);
+
+            // Click to kill
+            v.onmousedown = v.ontouchstart = function(e) {
+                e.preventDefault(); // prevent double firing on touch
+                if(!gameLoopActive) return;
+                playSound('shoot');
+                clearInterval(fall);
+                this.innerText = '💥';
+                this.className = 'virus-entity text-5xl filter drop-shadow-[0_0_15px_#00ff66] text-cyber-green transition-all duration-200 scale-150 opacity-0';
+                
+                virusKilled++;
+                counter.innerText = Math.min(virusKilled, VIRUS_TARGET);
+                
+                setTimeout(() => this.remove(), 200);
+
+                if (virusKilled >= VIRUS_TARGET) {
+                    gameLoopActive = false;
+                    setTimeout(() => {
+                        handleAnswer(true, 'การตอบสนองยอดเยี่ยม! คุณบล็อกมัลแวร์ได้หมดจด');
+                    }, 500);
+                }
+            };
+        }
+
         function showEndScreen() {
             isGameActive = false;
-            cursor.classList.add('hidden');
+            document.getElementById('game-ui').classList.add('hidden');
             const endScreen = document.getElementById('end-screen');
             document.getElementById('final-score').innerText = score;
             
             let evalText = "";
-            if (score === 500) evalText = "สุดยอด! คุณคือปรมาจารย์ด้านความปลอดภัยไซเบอร์ ไม่มีใครแฮกคุณได้แน่นอน!";
-            else if (score >= 300) evalText = "เก่งมาก! คุณมีความรู้ที่ดี แต่อาจจะต้องระวังกลลวงใหม่ๆ ให้มากขึ้นอีกนิดนะ";
-            else evalText = "อันตราย! ข้อมูลของคุณเสี่ยงถูกโจรกรรมสูงมาก ควรศึกษาเรื่อง Cyber Security เพิ่มเติมด่วน!";
+            let evalColor = "";
+            if (score === 500) {
+                evalText = "สุดยอดผู้พิทักษ์ (Cyber Master) 🌟\nความรู้ของคุณแน่นตึ้บ ไม่มีแฮกเกอร์คนไหนเจาะระบบคุณได้!";
+                evalColor = "text-cyber-green";
+            } else if (score >= 300) {
+                evalText = "เจ้าหน้าที่ระดับกลาง (Cyber Defender) 👍\nคุณป้องกันพื้นฐานได้ดี แต่อาจต้องระวังกลลวงใหม่ๆ ให้มากขึ้น";
+                evalColor = "text-yellow-400";
+            } else {
+                evalText = "ระบบมีความเสี่ยงสูง! (Vulnerable) ⚠️\nข้อมูลของคุณเสี่ยงถูกขโมย แนะนำให้ศึกษาเรื่อง Cyber Security เพิ่มเติมด่วน!";
+                evalColor = "text-cyber-alert";
+            }
             
-            document.getElementById('evaluation-text').innerText = evalText;
+            const evalDiv = document.getElementById('evaluation-text');
+            evalDiv.innerText = evalText;
+            evalDiv.className = `text-lg font-medium whitespace-pre-line mt-4 ${evalColor}`;
+            
             endScreen.classList.remove('hidden');
-        }
-
-        // --- Hand Tracking (MediaPipe) ---
-        const videoElement = document.querySelector('.input_video');
-        const canvasElement = document.querySelector('.output_canvas');
-        const canvasCtx = canvasElement.getContext('2d');
-
-        function onResults(results) {
-            // Draw Hand Skeleton (Small Video Corner)
-            canvasCtx.save();
-            canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-                for (const landmarks of results.multiHandLandmarks) {
-                    drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, {color: '#06b6d4', lineWidth: 2});
-                    drawLandmarks(canvasCtx, landmarks, {color: '#ec4899', lineWidth: 1, radius: 2});
-                }
-                
-                // Cursor Logic (Use first hand)
-                if(isGameActive) {
-                    const hand = results.multiHandLandmarks[0];
-                    const indexTip = hand[8];  // Index finger tip
-                    const thumbTip = hand[4];  // Thumb tip
-
-                    // Map normalized coordinates (0-1) to screen pixels. 
-                    // Note: X is inverted because of webcam mirroring.
-                    const screenX = (1 - indexTip.x) * window.innerWidth;
-                    const screenY = indexTip.y * window.innerHeight;
-
-                    // Move custom cursor
-                    cursor.style.left = screenX + 'px';
-                    cursor.style.top = screenY + 'px';
-
-                    // Calculate distance for "Pinch" gesture (Click)
-                    const dx = indexTip.x - thumbTip.x;
-                    const dy = indexTip.y - thumbTip.y;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-                    
-                    const pinchThreshold = 0.04; // Adjust sensitivity if needed
-
-                    if (distance < pinchThreshold) {
-                        if (!isPinching && !pinchCooldown) {
-                            // PINCH START (Simulate Click)
-                            isPinching = true;
-                            cursor.classList.add('pinching');
-                            
-                            // Find element under cursor and click it
-                            const element = document.elementFromPoint(screenX, screenY);
-                            if (element) {
-                                // Add active visual state
-                                if(element.classList.contains('cyber-button')) element.classList.add('active');
-                                
-                                // Trigger click
-                                element.click();
-                            }
-
-                            // Anti-spam cooldown
-                            pinchCooldown = true;
-                            setTimeout(() => { pinchCooldown = false; }, 500); 
-                        }
-                    } else {
-                        // PINCH RELEASE
-                        isPinching = false;
-                        cursor.classList.remove('pinching');
-                        document.querySelectorAll('.cyber-button').forEach(btn => btn.classList.remove('active'));
-                    }
-                }
-            }
-            canvasCtx.restore();
-        }
-
-        const hands = new Hands({locateFile: (file) => {
-            return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
-        }});
-        hands.setOptions({
-            maxNumHands: 1,
-            modelComplexity: 1,
-            minDetectionConfidence: 0.7,
-            minTrackingConfidence: 0.7
-        });
-        hands.onResults(onResults);
-
-        // --- Init Function ---
-        function initMouseMode() {
-            controlMode = 'mouse';
-            document.body.classList.add('hide-cursor');
-            
-            document.getElementById('start-screen').classList.add('hidden');
-            document.getElementById('game-ui').classList.remove('hidden');
-            document.getElementById('camera-corner').classList.add('hidden');
-            
-            cursor.classList.remove('hidden');
-            // Set initial cursor position to center
-            cursor.style.left = '50%';
-            cursor.style.top = '50%';
-            
-            isGameActive = true;
-            loadLevel(1);
-        }
-
-        async function initCamera() {
-            controlMode = 'cam';
-            document.getElementById('btn-start-cam').classList.add('hidden');
-            document.getElementById('btn-start-mouse').classList.add('hidden');
-            document.getElementById('loading-cam').classList.remove('hidden');
-
-            try {
-                const camera = new Camera(videoElement, {
-                    onFrame: async () => {
-                        await hands.send({image: videoElement});
-                    },
-                    width: 640,
-                    height: 480
-                });
-                await camera.start();
-                
-                // Setup complete, start game
-                document.getElementById('start-screen').classList.add('hidden');
-                document.getElementById('game-ui').classList.remove('hidden');
-                document.getElementById('camera-corner').classList.remove('hidden');
-                cursor.classList.remove('hidden');
-                
-                isGameActive = true;
-                loadLevel(1);
-
-            } catch (error) {
-                alert("ไม่สามารถเข้าถึงกล้องได้ กรุณาอนุญาตการใช้งานกล้องในบราวเซอร์ของคุณ (Error: " + error.message + ")");
-                document.getElementById('btn-start-cam').classList.remove('hidden');
-                document.getElementById('btn-start-mouse').classList.remove('hidden');
-                document.getElementById('loading-cam').classList.add('hidden');
-            }
+            playSound('correct');
         }
     </script>
 </body>
